@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Desk Informatico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Help Desk Informatico</h1>
+                    <p class="text-gray-600 mt-1">Sistema di gestione segnalazioni scolastiche</p>
+                </div>
+                <button onclick="apriModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nuova Segnalazione
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtri -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center gap-2 mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-600">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <h2 class="text-lg font-semibold text-gray-800">Filtri</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Urgenza</label>
+                    <select id="filtroUrgenza" onchange="filtraSegnalazioni()" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="tutti">Tutte le urgenze</option>
+                        <option value="immediato">Immediato</option>
+                        <option value="urgente">Urgente</option>
+                        <option value="differibile">Differibile</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Stato</label>
+                    <select id="filtroStato" onchange="filtraSegnalazioni()" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="tutti">Tutti gli stati</option>
+                        <option value="da prendere in carico">Da prendere in carico</option>
+                        <option value="presa in carico">Presa in carico</option>
+                        <option value="segnalazione risolta">Segnalazione risolta</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Segnalazioni -->
+        <div id="listaSegnalazioni" class="space-y-4"></div>
+
+        <!-- Statistiche -->
+        <div id="statistiche" class="bg-white rounded-lg shadow-md p-6 mt-6" style="display: none;">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Statistiche</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Da prendere in carico</p>
+                    <p id="statDaPrendere" class="text-2xl font-bold text-red-600">0</p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Prese in carico</p>
+                    <p id="statInCarico" class="text-2xl font-bold text-yellow-600">0</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Risolte</p>
+                    <p id="statRisolte" class="text-2xl font-bold text-green-600">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Nuova Segnalazione -->
+        <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Nuova Segnalazione</h2>
+                    <form id="formSegnalazione" onsubmit="aggiungiSegnalazione(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nome*</label>
+                                <input type="text" id="nome" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Cognome*</label>
+                                <input type="text" id="cognome" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ruolo*</label>
+                                <select id="ruolo" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                                    <option value="Docente">Docente</option>
+                                    <option value="Studente">Studente</option>
+                                    <option value="ATA">ATA</option>
+                                    <option value="Altro">Altro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Posizione/Aula*</label>
+                                <input type="text" id="posizione" required placeholder="es. Aula 3A, Lab. Informatica" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Grado di urgenza*</label>
+                            <select id="urgenza" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                                <option value="immediato">Immediato</option>
+                                <option value="urgente">Urgente</option>
+                                <option value="differibile">Differibile</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrizione del problema*</label>
+                            <textarea id="descrizione" required placeholder="Descrivi il problema in dettaglio..." class="w-full border border-gray-300 rounded-lg px-4 py-2 h-32"></textarea>
+                        </div>
+
+                        <div class="flex gap-3 justify-end">
+                            <button type="button" onclick="chiudiModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                Annulla
+                            </button>
+                            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                                Invia Segnalazione
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, push, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJsljlaZqGPX6EPK-FmYgHjoqLcpUBIFA",
+            authDomain: "helpdesk-93a0a.firebaseapp.com",
+            databaseURL: "https://helpdesk-93a0a-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "helpdesk-93a0a",
+            storageBucket: "helpdesk-93a0a.firebasestorage.app",
+            messagingSenderId: "824464432563",
+            appId: "1:824464432563:web:9544b5eb93397593a67fc6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const segnalazioniRef = ref(database, 'segnalazioni');
+
+        let segnalazioni = [];
+
+        const urgenzaColori = {
+            'immediato': 'bg-red-500 text-white',
+            'urgente': 'bg-orange-500 text-white',
+            'differibile': 'bg-blue-500 text-white'
+        };
+
+        const statoColori = {
+            'da prendere in carico': 'bg-red-100 text-red-800 border-red-300',
+            'presa in carico': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+            'segnalazione risolta': 'bg-green-100 text-green-800 border-green-300'
+        };
+
+        const prioritaOrdine = {
+            'immediato': 1,
+            'urgente': 2,
+            'differibile': 3
+        };
+
+        // Ascolta i cambiamenti in tempo reale dal database Firebase
+        onValue(segnalazioniRef, (snapshot) => {
+            segnalazioni = [];
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    segnalazioni.push({
+                        firebaseId: key,
+                        ...data[key]
+                    });
+                });
+            }
+            filtraSegnalazioni();
+        });
+
+        window.apriModal = function() {
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        window.chiudiModal = function() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('formSegnalazione').reset();
+        }
+
+        window.aggiungiSegnalazione = function(e) {
+            e.preventDefault();
+            
+            const nuova = {
+                id: Date.now(),
+                nome: document.getElementById('nome').value,
+                cognome: document.getElementById('cognome').value,
+                ruolo: document.getElementById('ruolo').value,
+                posizione: document.getElementById('posizione').value,
+                urgenza: document.getElementById('urgenza').value,
+                descrizione: document.getElementById('descrizione').value,
+                stato: 'da prendere in carico',
+                dataCreazione: new Date().toLocaleString('it-IT')
+            };
+
+            // Salva su Firebase
+            const newSegnalazioneRef = push(segnalazioniRef);
+            set(newSegnalazioneRef, nuova);
+
+            chiudiModal();
+        }
+
+        window.cambiaStato = function(firebaseId, nuovoStato) {
+            const segnalazioneRef = ref(database, `segnalazioni/${firebaseId}`);
+            update(segnalazioneRef, {
+                stato: nuovoStato
+            });
+        }
+
+        window.filtraSegnalazioni = function() {
+            const filtroUrgenza = document.getElementById('filtroUrgenza').value;
+            const filtroStato = document.getElementById('filtroStato').value;
+
+            let filtrate = segnalazioni
+                .filter(seg => filtroUrgenza === 'tutti' || seg.urgenza === filtroUrgenza)
+                .filter(seg => filtroStato === 'tutti' || seg.stato === filtroStato)
+                .sort((a, b) => prioritaOrdine[a.urgenza] - prioritaOrdine[b.urgenza]);
+
+            mostraSegnalazioni(filtrate);
+            aggiornaStatistiche();
+        }
+
+        function mostraSegnalazioni(lista) {
+            const container = document.getElementById('listaSegnalazioni');
+            
+            if (lista.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mx-auto text-gray-400 mb-4">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <p class="text-gray-600 text-lg">Nessuna segnalazione trovata</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = lista.map(seg => `
+                <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-800">
+                                    ${seg.nome} ${seg.cognome}
+                                </h3>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium ${urgenzaColori[seg.urgenza]}">
+                                    ${seg.urgenza.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="flex gap-4 text-sm text-gray-600 mb-3">
+                                <span><strong>Ruolo:</strong> ${seg.ruolo}</span>
+                                <span><strong>Posizione:</strong> ${seg.posizione}</span>
+                                <span><strong>Data:</strong> ${seg.dataCreazione}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-gray-700 bg-gray-50 p-4 rounded-lg">${seg.descrizione}</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-700">Stato:</span>
+                        <select onchange="cambiaStato('${seg.firebaseId}', this.value)" class="border-2 rounded-lg px-4 py-2 font-medium ${statoColori[seg.stato]}">
+                            <option value="da prendere in carico" ${seg.stato === 'da prendere in carico' ? 'selected' : ''}>Da prendere in carico</option>
+                            <option value="presa in carico" ${seg.stato === 'presa in carico' ? 'selected' : ''}>Presa in carico</option>
+                            <option value="segnalazione risolta" ${seg.stato === 'segnalazione risolta' ? 'selected' : ''}>Segnalazione risolta</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function aggiornaStatistiche() {
+            const statDiv = document.getElementById('statistiche');
+            
+            if (segnalazioni.length > 0) {
+                statDiv.style.display = 'block';
+                document.getElementById('statDaPrendere').textContent = 
+                    segnalazioni.filter(s => s.stato === 'da prendere in carico').length;
+                document.getElementById('statInCarico').textContent = 
+                    segnalazioni.filter(s => s.stato === 'presa in carico').length;
+                document.getElementById('statRisolte').textContent = 
+                    segnalazioni.filter(s => s.stato === 'segnalazione risolta').length;
+            } else {
+                statDiv.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
