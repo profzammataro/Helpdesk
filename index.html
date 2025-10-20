@@ -141,6 +141,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Password -->
+        <div id="modalPassword" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Autenticazione Richiesta</h2>
+                    <p class="text-gray-600 mb-6">Inserisci la password per modificare lo stato della segnalazione</p>
+                    <form id="formPassword" onsubmit="verificaPassword(event)">
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password*</label>
+                            <input type="password" id="passwordInput" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            <p id="errorePassword" class="text-red-600 text-sm mt-2 hidden">Password errata!</p>
+                        </div>
+
+                        <div class="flex gap-3 justify-end">
+                            <button type="button" onclick="annullaPassword()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                Annulla
+                            </button>
+                            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                                Conferma
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -163,6 +189,8 @@
         const segnalazioniRef = ref(database, 'segnalazioni');
 
         let segnalazioni = [];
+        let cambioStatoPendente = null;
+        const PASSWORD_CORRETTA = "zammy";
 
         const urgenzaColori = {
             'immediato': 'bg-red-500 text-white',
@@ -228,11 +256,59 @@
             chiudiModal();
         }
 
-        window.cambiaStato = function(firebaseId, nuovoStato) {
-            const segnalazioneRef = ref(database, `segnalazioni/${firebaseId}`);
-            update(segnalazioneRef, {
-                stato: nuovoStato
-            });
+        window.richiestaPassword = function(firebaseId, nuovoStato, selectElement) {
+            const segnalazione = segnalazioni.find(s => s.firebaseId === firebaseId);
+            if (!segnalazione) return;
+
+            // Se lo stato non è cambiato, non fare nulla
+            if (segnalazione.stato === nuovoStato) return;
+
+            // Salva i dati del cambio stato pendente
+            cambioStatoPendente = {
+                firebaseId: firebaseId,
+                nuovoStato: nuovoStato,
+                statoOriginale: segnalazione.stato,
+                selectElement: selectElement
+            };
+
+            // Mostra il modal della password
+            document.getElementById('modalPassword').classList.remove('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorePassword').classList.add('hidden');
+            document.getElementById('passwordInput').focus();
+        }
+
+        window.verificaPassword = function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('passwordInput').value;
+            
+            if (password === PASSWORD_CORRETTA) {
+                // Password corretta, esegui il cambio stato
+                if (cambioStatoPendente) {
+                    const segnalazioneRef = ref(database, `segnalazioni/${cambioStatoPendente.firebaseId}`);
+                    update(segnalazioneRef, {
+                        stato: cambioStatoPendente.nuovoStato
+                    });
+                    cambioStatoPendente = null;
+                }
+                // Chiudi il modal
+                document.getElementById('modalPassword').classList.add('hidden');
+            } else {
+                // Password errata, mostra errore
+                document.getElementById('errorePassword').classList.remove('hidden');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        window.annullaPassword = function() {
+            // Ripristina il valore originale della select
+            if (cambioStatoPendente && cambioStatoPendente.selectElement) {
+                cambioStatoPendente.selectElement.value = cambioStatoPendente.statoOriginale;
+            }
+            cambioStatoPendente = null;
+            document.getElementById('modalPassword').classList.add('hidden');
         }
 
         window.filtraSegnalazioni = function() {
@@ -291,7 +367,7 @@
 
                     <div class="flex items-center gap-3">
                         <span class="text-sm font-medium text-gray-700">Stato:</span>
-                        <select onchange="cambiaStato('${seg.firebaseId}', this.value)" class="border-2 rounded-lg px-4 py-2 font-medium ${statoColori[seg.stato]}">
+                        <select onchange="richiestaPassword('${seg.firebaseId}', this.value, this)" class="border-2 rounded-lg px-4 py-2 font-medium ${statoColori[seg.stato]}">
                             <option value="da prendere in carico" ${seg.stato === 'da prendere in carico' ? 'selected' : ''}>Da prendere in carico</option>
                             <option value="presa in carico" ${seg.stato === 'presa in carico' ? 'selected' : ''}>Presa in carico</option>
                             <option value="segnalazione risolta" ${seg.stato === 'segnalazione risolta' ? 'selected' : ''}>Segnalazione risolta</option>
